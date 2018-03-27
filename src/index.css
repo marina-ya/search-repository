@@ -1,0 +1,15 @@
+body {
+  text-align: center;
+  margin: 120px;
+  padding: 0;
+  font-family: sans-serif;
+}
+.search-list li {
+  display: inline-block;
+  vertical-align: top;
+  width: 20%;
+  margin: 1%;
+  padding: 1%;
+  list-style: none;
+  border: 1px solid grey;
+}
