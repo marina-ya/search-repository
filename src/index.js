@@ -13,10 +13,11 @@ class SearchForm extends React.Component {
       rating: 0,
       language: "none",
       errorMessage: "",
+      dublicateMessage: "",
       id: 0
     };
     this.handleChange = this.handleChange.bind(this);
-    this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleClickSubmit = this.handleClickSubmit.bind(this);
     this.handleRemove = this.handleRemove.bind(this);
   }
   componentWillMount() {
@@ -28,7 +29,6 @@ class SearchForm extends React.Component {
     fetch(`https://api.github.com/search/repositories?q=${this.state.value}`)
       .then(toJson)
       .then(data => {
-        console.log(data);
         const firstItem = data.items[0];
         let rating = this.ratingCalulate(firstItem);
         let searchResult = {
@@ -39,15 +39,37 @@ class SearchForm extends React.Component {
           id: firstItem.id,
           rating: rating
         };
-        this.setState({
-          searchResults: [...this.state.searchResults, searchResult],
-          value: ""
-        });
+        this.updateSearchResults(searchResult);
       })
       .catch(error => {
         this.setState({ errorMessage: "No repository found" });
       });
   }
+
+  updateSearchResults(searchResult) {
+    let isNewResult = true;
+
+    let updateValues = this.state.searchResults.forEach((item, i) => {
+      if (item.id == searchResult.id) {
+        isNewResult = false;
+        this.state.searchResults.splice(i, 1, searchResult);
+        this.setState({ dublicateMessage: "You have such search yet" });
+      }
+    });
+
+    if (isNewResult) {
+      this.setState({
+        searchResults: [...this.state.searchResults, searchResult]
+      });
+    }
+    this.emptySearchField();
+  }
+  emptySearchField() {
+    this.setState({
+      value: ""
+    });
+  }
+
   ratingCalulate(firstItem) {
     return (firstItem.stargazers_count && firstItem.open_issues) > 0
       ? Math.round(firstItem.stargazers_count / firstItem.open_issues * 100) /
@@ -59,8 +81,9 @@ class SearchForm extends React.Component {
     this.setState({ value: event.target.value });
   }
 
-  handleSubmit(event) {
+  handleClickSubmit(event) {
     this.setState({ errorMessage: "" });
+    this.setState({ dublicateMessage: "" });
     this.fetchData();
     event.preventDefault();
   }
@@ -69,9 +92,7 @@ class SearchForm extends React.Component {
     let updatedResults = this.state.searchResults.filter(
       item => item.id !== id
     );
-    this.setState({
-      searchResults: updatedResults
-    });
+    this.setState({ searchResults: updatedResults });
 
     localStorage.setItem("searchResults", JSON.stringify(updatedResults));
   }
@@ -96,7 +117,7 @@ class SearchForm extends React.Component {
     ));
     return (
       <div>
-        <form onSubmit={this.handleSubmit}>
+        <form onSubmit={this.handleClickSubmit}>
           <label>
             <input
               type="text"
@@ -107,6 +128,7 @@ class SearchForm extends React.Component {
           <input type="submit" value="Search" />
         </form>
         <p>{this.state.errorMessage} </p>
+        <p>{this.state.dublicateMessage} </p>
         <ul className="search-list">{searchElements}</ul>
       </div>
     );
